@@ -18,7 +18,6 @@
 ```
 /irwa-search-engine
 ├── myapp                # Contains the main application logic
-│   └── preprocessing    # Part 1: text pre-processing shared by all parts
 ├── templates            # Contains HTML templates for the Flask application
 ├── static               # Contains static assets (images, CSS, JavaScript)
 ├── data                 # Contains the dataset file (fashion_products_dataset.json)
@@ -31,18 +30,6 @@
 └── README.md            # Project documentation and usage instructions
 ```
 
-
-----
-## Project parts
-
-| Part | Topic | Code | Instructions | Tag |
-|---|---|---|---|---|
-| 1 | Text Processing and Exploratory Data Analysis | `project_progress/part_1/part_1.ipynb`, `myapp/preprocessing/text_processing.py` | [part_1/README.md](project_progress/part_1/README.md) | `IRWA-2026-part-1` |
-| 2 | Indexing and Evaluation | — | — | — |
-| 3 | Ranking and Filtering | — | — | — |
-| 4 | RAG, User Interface and Web Analytics | `web_app.py`, `myapp/` | this README | — |
-
-**Data:** put `fashion_products_dataset.json` and `validation_labels.csv` in `data/` (the folder is git-ignored).
 
 ----
 ## To download this repo locally
