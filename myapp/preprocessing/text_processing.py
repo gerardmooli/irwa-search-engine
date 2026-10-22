@@ -46,8 +46,10 @@ def _load_stopwords() -> set:
 STOP_WORDS: set = _load_stopwords()
 STEMMER = SnowballStemmer("english")
 
-# Tokens: runs of letters/digits. Everything else (punctuation, symbols) is a separator.
-_TOKEN_RE = re.compile(r"[a-z0-9]+")
+# A token is either a word (letters/digits) or a run of punctuation/symbols.
+# Keeping those two kinds apart is what makes "remove punctuation" its own step.
+_TOKEN_RE = re.compile(r"[a-z0-9]+|[^a-z0-9\s]+")
+_WORD_RE = re.compile(r"[a-z0-9]+")
 # Hyphen or apostrophe *inside* a word: "t-shirt" -> "tshirt", "men's" -> "mens".
 _INNER_JOIN_RE = re.compile(r"(?<=[a-z0-9])[-'’](?=[a-z0-9])")
 
@@ -85,32 +87,56 @@ def normalize_text(text: Optional[str]) -> str:
 
 
 def tokenize(text: str) -> List[str]:
-    """Split normalised text into alphanumeric tokens (punctuation is dropped here)."""
+    """Split text into tokens. Punctuation stays as its own tokens ("," "!" "..." )."""
     return _TOKEN_RE.findall(text)
+
+
+def remove_punctuation(tokens: List[str]) -> List[str]:
+    """Drop tokens that are only punctuation or symbols. Word tokens are unchanged."""
+    return [tok for tok in tokens if _WORD_RE.fullmatch(tok)]
+
+
+def remove_stop_words(tokens: List[str]) -> List[str]:
+    """Drop tokens that appear in the NLTK English stop-word list."""
+    return [tok for tok in tokens if tok not in STOP_WORDS]
+
+
+def stem_tokens(tokens: List[str]) -> List[str]:
+    """Apply the Snowball (Porter2) stemmer to every token."""
+    return [STEMMER.stem(tok) for tok in tokens]
 
 
 def build_terms(text: Optional[str], stem: bool = True, keep_numbers: bool = False) -> List[str]:
     """
     Turn one text field (or a query) into a list of index terms.
 
-    Steps: normalise -> tokenise (removes punctuation) -> drop stop words
-    -> drop pure numbers (optional) -> drop 1-character tokens -> stem (optional).
+    After normalisation, the four required steps run one after another:
+    tokenization, remove punctuation, remove stop words, stemming.
+    Pure numbers and 1-character tokens are dropped before stemming.
 
     :param text: raw text (title, description, query, ...)
     :param stem: apply the Snowball (Porter2) stemmer
     :param keep_numbers: keep purely numeric tokens such as "100" or "32"
     :return: list of terms, in original order (duplicates kept, needed for tf later)
     """
-    terms = []
-    for tok in tokenize(normalize_text(text)):
-        if tok in STOP_WORDS:
-            continue
-        if not keep_numbers and tok.isdigit():
-            continue
-        if len(tok) < 2:
-            continue
-        terms.append(STEMMER.stem(tok) if stem else tok)
-    return terms
+    normalised = normalize_text(text)
+
+    # 1. Tokenization
+    tokens = tokenize(normalised)
+
+    # 2. Remove punctuation marks
+    tokens = remove_punctuation(tokens)
+
+    # 3. Remove stop words
+    tokens = remove_stop_words(tokens)
+    if not keep_numbers:
+        tokens = [tok for tok in tokens if not tok.isdigit()]
+    tokens = [tok for tok in tokens if len(tok) >= 2]
+
+    # 4. Stemming
+    if stem:
+        tokens = stem_tokens(tokens)
+    return tokens
 
 
 def normalize_entity(text: Optional[str]) -> str:
@@ -121,7 +147,7 @@ def normalize_entity(text: Optional[str]) -> str:
     ("Levi's" vs "level"), so we only lower-case and remove spaces/punctuation:
     "Shyam Enterprises" -> "shyamenterprises", "Levi's" -> "levis".
     """
-    return "".join(tokenize(normalize_text(text)))
+    return "".join(remove_punctuation(tokenize(normalize_text(text))))
 
 
 def repair_brand(brand: Optional[str], url: Optional[str]) -> str:
@@ -135,7 +161,7 @@ def repair_brand(brand: Optional[str], url: Optional[str]) -> str:
     """
     if not brand:
         return ""
-    b = "".join(tokenize(normalize_text(brand)))
+    b = "".join(remove_punctuation(tokenize(normalize_text(brand))))
     if not b or not url:
         return brand
     path = urlparse(url).path.strip("/")

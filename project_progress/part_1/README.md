@@ -58,5 +58,5 @@ Columns of the processed corpus:
 ## Pre-processing pipeline (summary)
 
 lower-case + HTML/accents/whitespace normalisation → join inner hyphens/apostrophes (`T-Shirt` → `tshirt`)
-→ regex tokenisation (removes punctuation) → NLTK English stop words → drop numbers and 1-character tokens
+→ tokenisation (words and punctuation as separate tokens) → remove punctuation → NLTK English stop words → drop numbers and 1-character tokens
 → Snowball stemming. Brands/sellers: one exact token, no stemming. Numeric fields: parsed, not indexed as text.
