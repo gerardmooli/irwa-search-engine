@@ -4,10 +4,10 @@
 
 | File | Content |
 |---|---|
-| `part_1.ipynb` | Pre-processing and the exploratory data analysis |
+| `part_1.ipynb` | PART 1: Data preparation (points 0–4) and PART 2: Exploratory Data Analysis |
 | `IRWA-2026-uXXXXXX-uXXXXXX-uXXXXXX-part-1.pdf` | The report (add it here when it is ready) |
 
-The pre-processing functions are in the notebook, in the cell under "Setup and data loading".
+The pre-processing functions are in the notebook, in section 1 of PART 1.
 
 ## How to run (step by step)
 
